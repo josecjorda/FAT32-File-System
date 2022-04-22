@@ -189,6 +189,13 @@ int main()
     }
     else if(strcmp(token[0],"stat") == 0)
     {
+      for(int x = 0; x<16;x++)
+      {
+        printf("FileName: %s at cluster: %d with size: %d and attribute: %d\n",dir[x].DIR_NAME,dir[x].DIR_FirstClusterLow,dir[x].DIR_FileSize,dir[x].DIR_Attr);
+      }
+    }
+    else if(strcmp(token[0],"get") == 0)
+    {
 
     }
 
