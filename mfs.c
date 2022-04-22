@@ -30,6 +30,43 @@
 #include <string.h>
 #include <signal.h>
 
+#include <stdint.h>
+struct __attribute__((__packed__)) DirectoryEntry{
+  char DIR_NAME[11];
+  uint8_t DIR_Attr;
+  uint8_t Unused1[8];
+  uint16_t DIR_FirstClusterHigh;
+  uint8_t Unused2[4];
+  uint16_t DIR_FirstClusterLow;
+  uint32_t DIR_FileSize;
+};
+struct DirectoryEntry dir[16];
+
+char BS_OEMName[8];
+int16_t BPB_BytsPerSec;
+int8_t BPB_SecPerClus;
+int16_t BPB_RsvdSecCnt;
+int8_t BPB_NumFATS;
+int16_t BPB_RootEntCnt;
+char BS_VolLab[11];
+int32_t BPB_FATSz32;
+int32_t BPB_RootClus;
+int32_t RootDirSectors = 0;
+int32_t FirstDataSector = 0;
+int32_t FirstSectorofCluster = 0;
+
+int LBAToOffset(int32_t sector){
+  return ((sector-2)*BPB_BytesPerSec) + (BPB_BytesPerSec*BPB_RsvdSecCnt) + (BPB_NumFATs*BPB_FATSz32*BPB_BytesPerSec);
+}
+
+int16_t NextLB( uint32_t sector)
+{
+  uint32_t FATAdress = ( BPB_BytsPerSec*BPB_RSVDSecCnt) + ( sector * 4);
+  int16_t val;
+  fseek( fp, FATAdress,SEEK_SET);
+  fread( &val, 2, 1, fp);
+  return val;
+}
 #define MAX_NUM_ARGUMENTS 3
 
 #define WHITESPACE " \t\n"      // We want to split our command line up into tokens
@@ -56,7 +93,6 @@ int main()
     // inputs something since fgets returns NULL when there
     // is no input
     while( !fgets (cmd_str, MAX_COMMAND_SIZE, stdin) );
-
     /* Parse input */
     char *token[MAX_NUM_ARGUMENTS];
 
@@ -92,6 +128,26 @@ int main()
     for( token_index = 0; token_index < token_count; token_index ++ ) 
     {
       printf("token[%d] = %s\n", token_index, token[token_index] );  
+    }
+    FILE *fp = NULL;
+    if(strcmp(token[0],"open") == 0)
+    {
+      if(fp== NULL)
+      {
+        fp = fopen(token[1],"r");  
+        if(fp == NULL)
+        {
+          printf("Error: File system image not found");
+        }
+        else
+        {
+          printf("Works?");
+        }
+      }
+      else
+      {
+        printf("Its open bro");
+      }
     }
 
     free( working_root );
