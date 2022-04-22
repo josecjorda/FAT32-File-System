@@ -31,6 +31,7 @@
 #include <signal.h>
 
 #include <stdint.h>
+FILE *fp;
 struct __attribute__((__packed__)) DirectoryEntry{
   char DIR_NAME[11];
   uint8_t DIR_Attr;
@@ -55,15 +56,16 @@ int32_t RootDirSectors = 0;
 int32_t FirstDataSector = 0;
 int32_t FirstSectorofCluster = 0;
 
+
 int LBAToOffset(int32_t sector){
-  return ((sector-2)*BPB_BytesPerSec) + (BPB_BytesPerSec*BPB_RsvdSecCnt) + (BPB_NumFATs*BPB_FATSz32*BPB_BytesPerSec);
+  return ((sector-2)*BPB_BytsPerSec) + (BPB_BytsPerSec*BPB_RsvdSecCnt) + (BPB_NumFATS*BPB_FATSz32*BPB_BytsPerSec);
 }
 
 int16_t NextLB( uint32_t sector)
 {
-  uint32_t FATAdress = ( BPB_BytsPerSec*BPB_RSVDSecCnt) + ( sector * 4);
+  uint32_t FATAddress = ( BPB_BytsPerSec * BPB_RsvdSecCnt) + ( sector * 4);
   int16_t val;
-  fseek( fp, FATAdress,SEEK_SET);
+  fseek( fp, FATAddress,SEEK_SET);
   fread( &val, 2, 1, fp);
   return val;
 }
@@ -81,7 +83,6 @@ int main()
 {
 
   char * cmd_str = (char*) malloc( MAX_COMMAND_SIZE );
-
   while( 1 )
   {
     // Print out the mfs prompt
@@ -124,12 +125,7 @@ int main()
     // Now print the tokenized input as a debug check
     // \TODO Remove this code and replace with your FAT32 functionality
 
-    int token_index  = 0;
-    for( token_index = 0; token_index < token_count; token_index ++ ) 
-    {
-      printf("token[%d] = %s\n", token_index, token[token_index] );  
-    }
-    FILE *fp = NULL;
+
     if(strcmp(token[0],"open") == 0)
     {
       if(fp== NULL)
@@ -137,17 +133,63 @@ int main()
         fp = fopen(token[1],"r");  
         if(fp == NULL)
         {
-          printf("Error: File system image not found");
+          printf("Error: File system image not found\n");
         }
         else
         {
-          printf("Works?");
+          fseek( fp,11,SEEK_SET);
+          fread(&BPB_BytsPerSec,2,1,fp);
+
+          fseek( fp,13,SEEK_SET);
+          fread(&BPB_SecPerClus,1,1,fp);
+          
+          fseek( fp,14,SEEK_SET);
+          fread(&BPB_RsvdSecCnt,2,1,fp);
+
+          fseek( fp,16,SEEK_SET);
+          fread(&BPB_NumFATS,1,1,fp);
+          
+          fseek( fp,36,SEEK_SET);
+          fread(&BPB_FATSz32,4,1,fp);
+
+          //this is cd but its hardcoded
+          fseek( fp,0x100400,SEEK_SET);
+          fread(&dir[0], sizeof(struct DirectoryEntry), 16, fp);
+
         }
       }
       else
       {
-        printf("Its open bro");
+        printf("Error: File system image already open\n");
       }
+    }
+    else if(strcmp(token[0],"close") == 0)
+    {
+      if(fp==NULL)
+      {
+        printf("Error: File system not open\n");
+      }
+      else
+      {
+        fclose(fp);
+        fp = NULL;
+      }
+    }
+    else if(fp == NULL)
+    {
+      printf("Error: File system image must be opened first.\n");
+    }
+    else if(strcmp(token[0],"info") == 0)
+    {
+      printf("BPB_BytsPerSec: %d\n", BPB_BytsPerSec);
+      printf("BPB_SecPerClus: %d\n", BPB_SecPerClus);
+      printf("BPB_RsvdSecCnt: %d\n", BPB_RsvdSecCnt);
+      printf("BPB_NumFATS: %d\n", BPB_NumFATS);
+      printf("BPB_FATSz32: %d\n", BPB_FATSz32);
+    }
+    else if(strcmp(token[0],"stat") == 0)
+    {
+
     }
 
     free( working_root );
