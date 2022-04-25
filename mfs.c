@@ -29,8 +29,10 @@
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
-
+#include <stdbool.h>
+#include <ctype.h>
 #include <stdint.h>
+
 FILE *fp;
 struct __attribute__((__packed__)) DirectoryEntry{
   char DIR_NAME[11];
@@ -78,6 +80,55 @@ int16_t NextLB( uint32_t sector)
                                 // will separate the tokens on our command line
 
 #define MAX_COMMAND_SIZE 255    // The maximum command-line size
+
+
+bool compare(char * name, char * change)
+{
+  bool tf = false;
+
+  char IMG_Name[12];
+  strncpy(IMG_Name, name,11);
+
+  char input[12];
+  strncpy(input, change,11);
+
+
+  char expanded_name[12];
+  if(strcmp(input,"..") != 0)
+  {
+    memset( expanded_name, ' ', 12 );
+
+    char *token = strtok( input, "." );
+    strncpy( expanded_name, token, strlen( token ) );
+
+    token = strtok( NULL, "." );
+
+    if( token )
+    {
+      strncpy( (char*)(expanded_name+8), token, strlen(token ) );
+    }
+
+    expanded_name[11] = '\0';
+
+    int i;
+    for( i = 0; i < 11; i++ )
+    {
+      expanded_name[i] = toupper( expanded_name[i] );
+    }
+  }
+  else
+  {
+    strncpy(expanded_name, "..",2);
+    expanded_name[3] = '\0';
+  }
+  if( strncmp( expanded_name, IMG_Name, 11 ) == 0 )
+  {
+    tf = true;
+  }
+  return tf;
+}
+
+
 
 
 int main()
@@ -192,7 +243,26 @@ int main()
     {
       for(int x = 0; x<16;x++)
       {
-        printf("FileName: %s at cluster: %d with size: %d and attribute: %d\n",dir[x].DIR_NAME,dir[x].DIR_FirstClusterLow,dir[x].DIR_FileSize,dir[x].DIR_Attr);
+        char filename[11];
+        memcpy(filename,dir[x].DIR_NAME,11);
+        filename[11] = '\0';
+        printf("FileName: %s at cluster: %d with size: %d and attribute: %d\n",filename,dir[x].DIR_FirstClusterLow,dir[x].DIR_FileSize,dir[x].DIR_Attr);
+      }
+    }
+    else if(strcmp(token[0],"get") == 0)
+    {
+
+    }
+    else if(strcmp(token[0],"cd") == 0)//need to get cd .. to work
+    {
+      for(int x = 0; x<16;x++)
+      {
+        if(compare(dir[x].DIR_NAME, token[1]) == true)
+        {
+          int offset = LBAToOffset(dir[x].DIR_FirstClusterLow);
+          fseek(fp,offset,SEEK_SET);
+          fread(dir,sizeof(struct DirectoryEntry),16,fp);
+        }
       }
     }
     else if(strcmp(token[0],"ls") == 0)
@@ -204,15 +274,27 @@ int main()
           char filename[11];
           memcpy(filename,dir[x].DIR_NAME,11);
           filename[11] = '\0';
-          printf("%s ",filename);
+          printf("%s \n",filename);
         }
       }
-      printf("\n");
     }
-    else if(strcmp(token[0],"get") == 0)
+    else if(strcmp(token[0],"read") == 0)
     {
 
     }
+    else if(strcmp(token[0],"del") == 0)
+    {
+
+    }
+    else if(strcmp(token[0],"undel") == 0)
+    {
+
+    }
+    else if(strcmp(token[0],"quit") == 0 || strcmp(token[0],"exit") == 0)
+    {
+      exit(0);
+    }
+    
 
     free( working_root );
 
