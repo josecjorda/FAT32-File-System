@@ -52,6 +52,7 @@ int16_t BPB_RootEntCnt;
 char BS_VolLab[11];
 int32_t BPB_FATSz32;
 int32_t BPB_RootClus;
+
 int32_t RootDirSectors = 0;
 int32_t FirstDataSector = 0;
 int32_t FirstSectorofCluster = 0;
@@ -193,6 +194,20 @@ int main()
       {
         printf("FileName: %s at cluster: %d with size: %d and attribute: %d\n",dir[x].DIR_NAME,dir[x].DIR_FirstClusterLow,dir[x].DIR_FileSize,dir[x].DIR_Attr);
       }
+    }
+    else if(strcmp(token[0],"ls") == 0)
+    {
+      for(int x = 0; x<16;x++)
+      {
+        if(dir[x].DIR_NAME[0] != 0xe5 && (dir[x].DIR_Attr== 0x01 ||dir[x].DIR_Attr== 0x10 || dir[x].DIR_Attr== 0x20))
+        {
+          char filename[11];
+          memcpy(filename,dir[x].DIR_NAME,11);
+          filename[11] = '\0';
+          printf("%s ",filename);
+        }
+      }
+      printf("\n");
     }
     else if(strcmp(token[0],"get") == 0)
     {
