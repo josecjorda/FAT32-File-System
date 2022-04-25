@@ -239,7 +239,7 @@ int main()
       printf("BPB_NumFATS: %d\n", BPB_NumFATS);
       printf("BPB_FATSz32: %d\n", BPB_FATSz32);
     }
-    else if(strcmp(token[0],"stat") == 0)
+    else if(strcmp(token[0],"stat") == 0)//not sure about the constraints he listed
     {
       for(int x = 0; x<16;x++)
       {
@@ -253,7 +253,7 @@ int main()
     {
 
     }
-    else if(strcmp(token[0],"cd") == 0)//need to get cd .. to work
+    else if(strcmp(token[0],"cd") == 0)//need to get cd .. and specific directory locations to work
     {
       for(int x = 0; x<16;x++)
       {
@@ -280,7 +280,22 @@ int main()
     }
     else if(strcmp(token[0],"read") == 0)
     {
-
+      for(int x = 0; x<16;x++)
+      {
+        if(compare(dir[x].DIR_NAME, token[1]) == true)
+        {
+          int temp[100];
+          int offset = LBAToOffset(dir[x].DIR_FirstClusterLow);
+          fseek(fp,offset,SEEK_SET);
+          fseek(fp,atoi(token[2]),SEEK_CUR);
+          fread(temp,atoi(token[3]),1,fp);
+          for(int y =0;y<atoi(token[3]);y++)
+          {
+            printf("%d", temp[y]);
+          }
+          printf("\n");
+        }
+      }
     }
     else if(strcmp(token[0],"del") == 0)
     {
