@@ -249,9 +249,39 @@ int main()
         printf("FileName: %s at cluster: %d with size: %d and attribute: %d\n",filename,dir[x].DIR_FirstClusterLow,dir[x].DIR_FileSize,dir[x].DIR_Attr);
       }
     }
-    else if(strcmp(token[0],"get") == 0)
+    else if(strcmp(token[0],"get") == 0)//code from class
     {
-
+      for(int x = 0; x<16;x++)
+      {
+        if(compare(dir[x].DIR_NAME, token[1]) == true)
+        {
+          int cluster = dir[x].DIR_FirstClusterLow;
+          int offset = LBAToOffset(cluster);
+          int size = dir[x].DIR_FileSize;
+          fseek(fp,offset,SEEK_SET);
+          FILE *ofp = fopen(token[1],"w");
+          uint8_t buffer[512];
+          while(size >= BPB_BytsPerSec)
+          {
+            fread(buffer,512,1,fp);
+            fwrite(buffer,512,1,ofp);
+            size = size-512;
+            cluster = NextLB(cluster);
+            offset = LBAToOffset(cluster);
+            fseek(fp,offset,SEEK_SET);
+          }
+          if(size>0)
+          {
+            fread(buffer,size,1,fp);
+            fwrite(buffer,size,1,ofp);
+            fclose(ofp);
+          }
+          else
+          {
+            fclose(ofp);
+          }
+        }
+      }
     }
     else if(strcmp(token[0],"cd") == 0)//need to get cd .. and specific directory locations to work
     {
@@ -284,14 +314,14 @@ int main()
       {
         if(compare(dir[x].DIR_NAME, token[1]) == true)
         {
-          int temp[100];
+          char temp[100];
           int offset = LBAToOffset(dir[x].DIR_FirstClusterLow);
           fseek(fp,offset,SEEK_SET);
           fseek(fp,atoi(token[2]),SEEK_CUR);
           fread(temp,atoi(token[3]),1,fp);
           for(int y =0;y<atoi(token[3]);y++)
           {
-            printf("%d", temp[y]);
+            printf("%d ", temp[y]);
           }
           printf("\n");
         }
