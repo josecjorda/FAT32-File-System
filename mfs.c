@@ -150,7 +150,7 @@ int main()
     char *token[MAX_NUM_ARGUMENTS];
 
     int   token_count = 0;                                 
-                                                           
+    char firstletter;                                       
     // Pointer to point to the token
     // parsed by strsep
     char *arg_ptr;                                         
@@ -314,7 +314,7 @@ int main()
       {
         if(compare(dir[x].DIR_NAME, token[1]) == true)
         {
-          char temp[100];
+          u_int8_t temp[100];
           int offset = LBAToOffset(dir[x].DIR_FirstClusterLow);
           fseek(fp,offset,SEEK_SET);
           fseek(fp,atoi(token[2]),SEEK_CUR);
@@ -329,11 +329,28 @@ int main()
     }
     else if(strcmp(token[0],"del") == 0)
     {
-
+      for(int x = 0; x<16;x++)
+      {
+        if(compare(dir[x].DIR_NAME, token[1]) == true)
+        {
+          firstletter = dir[x].DIR_NAME[0];
+          dir[x].DIR_NAME[0] = '1';
+          //attr causes it to dissapear
+          dir[x].DIR_Attr = 0;
+        }
+      }
     }
     else if(strcmp(token[0],"undel") == 0)
     {
-
+      for(int x = 0; x<16;x++)
+      {
+        if(dir[x].DIR_NAME[0] =='1')
+        {
+          dir[x].DIR_NAME[0] = firstletter;
+          //attr causes it to reappear
+          dir[x].DIR_Attr = 0x1;
+        }
+      }
     }
     else if(strcmp(token[0],"quit") == 0 || strcmp(token[0],"exit") == 0)
     {
