@@ -94,7 +94,7 @@ bool compare(char * name, char * change)
 
 
   char expanded_name[12];
-  if(strcmp(input,"..") != 0)
+  if(strncmp(change,"..",2) != 0)
   {
     memset( expanded_name, ' ', 12 );
 
@@ -120,6 +120,11 @@ bool compare(char * name, char * change)
   {
     strncpy(expanded_name, "..",2);
     expanded_name[3] = '\0';
+    if( strncmp( expanded_name, IMG_Name, 2 ) == 0 )
+    {
+      tf = true;
+    }
+    return tf;
   }
   if( strncmp( expanded_name, IMG_Name, 11 ) == 0 )
   {
@@ -178,7 +183,11 @@ int main()
     // \TODO Remove this code and replace with your FAT32 functionality
 
 
-    if(strcmp(token[0],"open") == 0)
+    if(strcmp(token[0],"quit") == 0 || strcmp(token[0],"exit") == 0)
+    {
+      exit(0);
+    }
+    else if(strcmp(token[0],"open") == 0)
     {
       if(fp== NULL)
       {
@@ -231,7 +240,7 @@ int main()
     {
       printf("Error: File system image must be opened first.\n");
     }
-    else if(strcmp(token[0],"info") == 0)
+    else if(strcmp(token[0],"info") == 0)//need to convert to hexadecimal
     {
       printf("BPB_BytsPerSec: %d\n", BPB_BytsPerSec);
       printf("BPB_SecPerClus: %d\n", BPB_SecPerClus);
@@ -283,13 +292,22 @@ int main()
         }
       }
     }
-    else if(strcmp(token[0],"cd") == 0)//need to get cd .. and specific directory locations to work
+    else if(strcmp(token[0],"cd") == 0)
     {
       for(int x = 0; x<16;x++)
       {
         if(compare(dir[x].DIR_NAME, token[1]) == true)
         {
-          int offset = LBAToOffset(dir[x].DIR_FirstClusterLow);
+          int offset;
+          if(dir[x].DIR_FirstClusterLow == 0)//if at starting cluster
+          {
+            offset = LBAToOffset(2); 
+          }
+          else
+          {
+            offset = LBAToOffset(dir[x].DIR_FirstClusterLow);
+          }
+      
           fseek(fp,offset,SEEK_SET);
           fread(dir,sizeof(struct DirectoryEntry),16,fp);
         }
@@ -314,11 +332,12 @@ int main()
       {
         if(compare(dir[x].DIR_NAME, token[1]) == true)
         {
-          u_int8_t temp[100];
+          uint8_t temp[512];
           int offset = LBAToOffset(dir[x].DIR_FirstClusterLow);
           fseek(fp,offset,SEEK_SET);
           fseek(fp,atoi(token[2]),SEEK_CUR);
           fread(temp,atoi(token[3]),1,fp);
+
           for(int y =0;y<atoi(token[3]);y++)
           {
             printf("%d ", temp[y]);
@@ -334,6 +353,7 @@ int main()
         if(compare(dir[x].DIR_NAME, token[1]) == true)
         {
           firstletter = dir[x].DIR_NAME[0];
+          //wasnt sure how to use 0xe5 so used 1 as a replacement
           dir[x].DIR_NAME[0] = '1';
           //attr causes it to dissapear
           dir[x].DIR_Attr = 0;
@@ -351,10 +371,6 @@ int main()
           dir[x].DIR_Attr = 0x1;
         }
       }
-    }
-    else if(strcmp(token[0],"quit") == 0 || strcmp(token[0],"exit") == 0)
-    {
-      exit(0);
     }
     
 
