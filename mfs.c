@@ -133,7 +133,39 @@ bool compare(char * name, char * change)
   return tf;
 }
 
-
+const char * dectohex(int dec){//used in info to convert decimal to hexadecimal
+    char dechexNum[100];
+    static char output[100];
+    int x = 0;
+    int num = dec;
+    while (num != 0)
+    {
+      int temp = 0;
+      temp = num % 16;
+      if (temp < 10) 
+      {
+        dechexNum[x] = temp + 48;
+        x++;
+      }
+      else
+      {
+        dechexNum[x] = temp + 87;
+        x++;
+      }
+      num = num / 16;
+    }
+    dechexNum[x] = '\0';
+    //reversing string
+    int y = 0;
+    for(x = strlen(dechexNum)-1; x>=0;x--)
+    {
+      output[y] = dechexNum[x];
+      y++;
+    }
+    output[y] = '\0';
+    return output;
+    
+}
 
 
 int main()
@@ -242,11 +274,11 @@ int main()
     }
     else if(strcmp(token[0],"info") == 0)//need to convert to hexadecimal
     {
-      printf("BPB_BytsPerSec: %d\n", BPB_BytsPerSec);
-      printf("BPB_SecPerClus: %d\n", BPB_SecPerClus);
-      printf("BPB_RsvdSecCnt: %d\n", BPB_RsvdSecCnt);
-      printf("BPB_NumFATS: %d\n", BPB_NumFATS);
-      printf("BPB_FATSz32: %d\n", BPB_FATSz32);
+      printf("BPB_BytsPerSec: %d %s\n", BPB_BytsPerSec,dectohex(BPB_BytsPerSec));
+      printf("BPB_SecPerClus: %d %s\n", BPB_SecPerClus,dectohex(BPB_SecPerClus));
+      printf("BPB_RsvdSecCnt: %d %s\n", BPB_RsvdSecCnt,dectohex(BPB_RsvdSecCnt));
+      printf("BPB_NumFATS: %d %s\n", BPB_NumFATS,dectohex(BPB_NumFATS));
+      printf("BPB_FATSz32: %d %s\n", BPB_FATSz32,dectohex(BPB_FATSz32));
     }
     else if(strcmp(token[0],"stat") == 0)//not sure about the constraints he listed
     {
