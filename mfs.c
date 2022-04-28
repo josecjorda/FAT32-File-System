@@ -72,7 +72,7 @@ int16_t NextLB( uint32_t sector)
   fread( &val, 2, 1, fp);
   return val;
 }
-#define MAX_NUM_ARGUMENTS 3
+#define MAX_NUM_ARGUMENTS 4
 
 #define WHITESPACE " \t\n"      // We want to split our command line up into tokens
                                 // so we need to define what delimits our tokens.
@@ -210,7 +210,7 @@ int main()
       }
         token_count++;
     }
-
+    
     // Now print the tokenized input as a debug check
     // \TODO Remove this code and replace with your FAT32 functionality
 
@@ -282,20 +282,34 @@ int main()
     }
     else if(strcmp(token[0],"stat") == 0)//not sure about the constraints he listed
     {
-      for(int x = 0; x<16;x++)
-      {
-        char filename[11];
-        memcpy(filename,dir[x].DIR_NAME,11);
-        filename[11] = '\0';
-        printf("FileName: %s at cluster: %d with size: %d and attribute: %d\n",filename,dir[x].DIR_FirstClusterLow,dir[x].DIR_FileSize,dir[x].DIR_Attr);
-      }
-    }
-    else if(strcmp(token[0],"get") == 0)//code from class
-    {
+      bool found = false;
       for(int x = 0; x<16;x++)
       {
         if(compare(dir[x].DIR_NAME, token[1]) == true)
         {
+          char filename[11];
+          memcpy(filename,dir[x].DIR_NAME,11);
+          filename[11] = '\0';
+          printf("File Size: %d\n",dir[x].DIR_FileSize);
+          printf("File Cluster Low: %d\n",dir[x].DIR_FirstClusterLow);
+          printf("DIR_ATTR: %d\n",dir[x].DIR_Attr);
+          printf("First Cluster High: %d\n",dir[x].DIR_FirstClusterHigh);
+          found = true;
+        }
+      }
+      if(found == false)
+      {
+        printf("Error: File not found\n");
+      }
+    }
+    else if(strcmp(token[0],"get") == 0)//code from class
+    {
+      bool found = false;
+      for(int x = 0; x<16;x++)
+      {
+        if(compare(dir[x].DIR_NAME, token[1]) == true)
+        {
+          found = true;
           int cluster = dir[x].DIR_FirstClusterLow;
           int offset = LBAToOffset(cluster);
           int size = dir[x].DIR_FileSize;
@@ -305,7 +319,7 @@ int main()
           while(size >= BPB_BytsPerSec)
           {
             fread(buffer,512,1,fp);
-            fwrite(buffer,512,1,ofp);
+            fwrite(buffer,512,1,ofp); 
             size = size-512;
             cluster = NextLB(cluster);
             offset = LBAToOffset(cluster);
@@ -322,6 +336,10 @@ int main()
             fclose(ofp);
           }
         }
+      }
+      if(found == false)
+      {
+        printf("Error: File not found\n");
       }
     }
     else if(strcmp(token[0],"cd") == 0)
@@ -364,15 +382,18 @@ int main()
       {
         if(compare(dir[x].DIR_NAME, token[1]) == true)
         {
-          uint8_t temp[512];
+          char temp[512];
+          //get file location
           int offset = LBAToOffset(dir[x].DIR_FirstClusterLow);
           fseek(fp,offset,SEEK_SET);
           fseek(fp,atoi(token[2]),SEEK_CUR);
+          //save into temp
           fread(temp,atoi(token[3]),1,fp);
 
+          //print out temp
           for(int y =0;y<atoi(token[3]);y++)
           {
-            printf("%d ", temp[y]);
+            printf("%c ", temp[y]);
           }
           printf("\n");
         }
